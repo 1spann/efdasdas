@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+<!-- cadpy:sourcePath=tr5000_1_urdf.py -->
+<!-- cadpy:sourceHash=7cf2be15e39db9a13f10cca175171e34d1ebc17781ad13557d4031d691cf8716 -->
+<robot name="tr5000_trash_rocket">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-4.4 0 0.55" rpy="0 0 0" />
+      <mass value="2950" />
+      <inertia ixx="1959.29" iyy="19334.8" izz="20699.2" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/base_link.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/base_link.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="turret">
+    <inertial>
+      <origin xyz="0 0 0.03" rpy="0 0 0" />
+      <mass value="40" />
+      <inertia ixx="1.06167" iyy="1.06167" izz="2.09067" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/turret.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/turret.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="boom">
+    <inertial>
+      <origin xyz="0.82 0 0.66" rpy="0 0 0" />
+      <mass value="180" />
+      <inertia ixx="30.3375" iyy="72.75" izz="44.2875" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/boom.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/boom.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="chute_1">
+    <inertial>
+      <origin xyz="-1.2 0 0.46" rpy="0 0 0" />
+      <mass value="330" />
+      <inertia ixx="46.552" iyy="683.551" izz="683.551" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="chute_2">
+    <inertial>
+      <origin xyz="-2.5 0 0.46" rpy="0 0 0" />
+      <mass value="240" />
+      <inertia ixx="28.224" iyy="494.312" izz="494.312" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="chute_3">
+    <inertial>
+      <origin xyz="-2.9 0 0.46" rpy="0 0 0" />
+      <mass value="210" />
+      <inertia ixx="21.8435" iyy="431.097" izz="431.097" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_3.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_3.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="chute_4">
+    <inertial>
+      <origin xyz="-3.4 0 0.4" rpy="0 0 0" />
+      <mass value="260" />
+      <inertia ixx="62.3328" iyy="854.533" izz="873.533" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_4.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="tr5000_1_meshes/chute_4.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="turret_slew" type="revolute">
+    <parent link="base_link" />
+    <child link="turret" />
+    <origin xyz="-3.6576 0 1.64084" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-3.14159" upper="3.14159" effort="8000" velocity="0.5" />
+  </joint>
+  <joint name="boom_lift" type="revolute">
+    <parent link="turret" />
+    <child link="boom" />
+    <origin xyz="0 0 0.05916" rpy="0 0 0" />
+    <axis xyz="0 -1 0" />
+    <limit lower="0" upper="0.698132" effort="60000" velocity="0.25" />
+  </joint>
+  <joint name="chute_pitch" type="revolute">
+    <parent link="boom" />
+    <child link="chute_1" />
+    <origin xyz="1.6456 0 1.3226" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-0.0872665" upper="1.72788" effort="60000" velocity="0.25" />
+  </joint>
+  <joint name="telescope_2" type="prismatic">
+    <parent link="chute_1" />
+    <child link="chute_2" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="-1 0 0" />
+    <limit lower="0" upper="2.05057" effort="15000" velocity="0.4" />
+  </joint>
+  <joint name="telescope_3" type="prismatic">
+    <parent link="chute_2" />
+    <child link="chute_3" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="-1 0 0" />
+    <limit lower="0" upper="2.05057" effort="15000" velocity="0.4" />
+  </joint>
+  <joint name="telescope_4" type="prismatic">
+    <parent link="chute_3" />
+    <child link="chute_4" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="-1 0 0" />
+    <limit lower="0" upper="2.05057" effort="15000" velocity="0.4" />
+  </joint>
+</robot>

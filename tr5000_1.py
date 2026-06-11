@@ -69,6 +69,24 @@ FENDER_W     = inch(10)
 
 TURRET_X = -ft(12)
 
+# Kinematic frames (also consumed by the URDF generator, tr5000_1_urdf.py)
+COLUMN_TOP_Z  = DECK_TOP_Z + inch(36)        # slew-ring seat / turret joint
+BOOM_PIVOT_Z  = 1700.0                       # boom lift pivot above ground
+BOOM_ANGLE_DEG = 38.8                        # stowed boom angle from horizontal
+SADDLE_X      = -2012.0                      # chute saddle / chute pitch pivot
+SADDLE_TOP_Z  = CHUTE_CL_Z - TUBE_ODS[0]/2   # tube-1 underside at the saddle
+
+# Link frame origins in model coordinates (mm)
+LINK_FRAMES = {
+    "base_link": (0.0, 0.0, 0.0),
+    "turret":    (TURRET_X, 0.0, COLUMN_TOP_Z),
+    "boom":      (TURRET_X, 0.0, BOOM_PIVOT_Z),
+    "chute_1":   (SADDLE_X, 0.0, SADDLE_TOP_Z),
+    "chute_2":   (SADDLE_X, 0.0, SADDLE_TOP_Z),
+    "chute_3":   (SADDLE_X, 0.0, SADDLE_TOP_Z),
+    "chute_4":   (SADDLE_X, 0.0, SADDLE_TOP_Z),
+}
+
 
 # ---------------------------------------------------------------------------
 # Part builders (centred at origin unless noted; caller positions via moved)
@@ -134,9 +152,14 @@ def make_turret_column():
     with BuildPart() as p:
         Box(inch(16), inch(16), inch(36),
             align=(Align.CENTER, Align.CENTER, Align.MIN))
-        with Locations((0, 0, inch(36))):
-            Cylinder(radius=inch(11), height=inch(2.5),
-                     align=(Align.CENTER, Align.CENTER, Align.MIN))
+    return p.part
+
+
+def make_slew_ring():
+    """Rotating turret bearing — the slew (URDF turret) link."""
+    with BuildPart() as p:
+        Cylinder(radius=inch(11), height=inch(2.5),
+                 align=(Align.CENTER, Align.CENTER, Align.MIN))
     return p.part
 
 
@@ -243,100 +266,119 @@ def make_deflector():
 # Assembly
 # ---------------------------------------------------------------------------
 
-def gen_step():
-    asm = AssemblyHelper("tr5000_trash_rocket")
+def build_groups():
+    """Positioned parts grouped by kinematic link (stowed = zero pose).
+
+    Groups feed both the STEP assembly (gen_step) and the per-link mesh
+    export for the URDF. The hydraulic cylinder stays in base_link: URDF
+    trees cannot close the boom/cylinder loop, so it is correct only in
+    the stowed pose (documented cosmetic limitation).
+    """
+    groups = {name: [] for name in LINK_FRAMES}
+
+    def add(link, shape, *label):
+        groups[link].append((shape, label))
+
     frame_cz = DECK_TOP_Z - FRAME_H/2
 
-    # Frame: front at -6', rear at 28'-1"
+    # --- base_link: trailer and everything that never articulates ---
     frame_len = -(STA_FRAME_REAR + ft(6))
-    asm.add(make_frame().moved(
-                Location((-ft(6) - frame_len/2, 0, frame_cz))),
-            "trailer_frame")
+    add("base_link",
+        make_frame().moved(Location((-ft(6) - frame_len/2, 0, frame_cz))),
+        "trailer_frame")
+    add("base_link", make_tongue().moved(Location((-ft(4), 0, frame_cz))),
+        "tongue")
+    add("base_link", make_coupler().moved(Location((-inch(6), 0, frame_cz))),
+        "coupler")
+    add("base_link",
+        make_tongue_jack().moved(Location((-ft(3), inch(5), inch(17)))),
+        "tongue_jack")
 
-    # Tongue from hitch to frame, coupler face exactly at X=0
-    asm.add(make_tongue().moved(Location((-ft(4), 0, frame_cz))), "tongue")
-    asm.add(make_coupler().moved(Location((-inch(6), 0, frame_cz))),
-            "coupler")
-    asm.add(make_tongue_jack().moved(
-                Location((-ft(3), inch(5), inch(17)))),
-            "tongue_jack")
-
-    # Tandem axles + wheels
     wheel_cz = TIRE_OD/2
     for i, ax in enumerate([AXLE_GROUP_X + AXLE_SPACING/2,
                             AXLE_GROUP_X - AXLE_SPACING/2]):
-        asm.add(make_axle().moved(Location((ax, 0, wheel_cz))),
-                "axle", str(i+1))
+        add("base_link", make_axle().moved(Location((ax, 0, wheel_cz))),
+            "axle", str(i+1))
         for side, ys in [("left", 1), ("right", -1)]:
-            asm.add(make_wheel().moved(
-                        Location((ax, ys*inch(45.2), wheel_cz))),
-                    "wheel", f"{i+1}_{side}")
+            add("base_link",
+                make_wheel().moved(Location((ax, ys*inch(45.2), wheel_cz))),
+                "wheel", f"{i+1}_{side}")
 
-    # Fenders set the 8'-6" overall width
     fender_cy = OVERALL_HALFW - FENDER_W/2
     for side, ys in [("left", 1), ("right", -1)]:
-        asm.add(make_fender().moved(
-                    Location((AXLE_GROUP_X, ys*fender_cy, inch(34.5)))),
-                "fender", side)
+        add("base_link",
+            make_fender().moved(
+                Location((AXLE_GROUP_X, ys*fender_cy, inch(34.5)))),
+            "fender", side)
 
-    # Stabilizer legs at the 4'-2" and 25'-6" stations
     for sta_name, sx in [("front", STA_FRONT_LEGS), ("rear", STA_REAR_LEGS)]:
         for side, ys in [("left", 1), ("right", -1)]:
-            asm.add(make_stabilizer().moved(
-                        Location((sx, ys*(FRAME_W/2 - inch(1.5)), 0))),
-                    "stabilizer", f"{sta_name}_{side}")
+            add("base_link",
+                make_stabilizer().moved(
+                    Location((sx, ys*(FRAME_W/2 - inch(1.5)), 0))),
+                "stabilizer", f"{sta_name}_{side}")
 
-    # Turret, battery box, A-braces
-    asm.add(make_turret_column().moved(
-                Location((TURRET_X, 0, DECK_TOP_Z))),
-            "turret_column")
-    asm.add(make_battery_box().moved(
-                Location((TURRET_X + inch(16), 0, DECK_TOP_Z + inch(11)))),
-            "battery_box")
+    add("base_link",
+        make_turret_column().moved(Location((TURRET_X, 0, DECK_TOP_Z))),
+        "turret_column")
+    add("base_link",
+        make_battery_box().moved(
+            Location((TURRET_X + inch(16), 0, DECK_TOP_Z + inch(11)))),
+        "battery_box")
     for side, ys, rot in [("left", 1, -48), ("right", -1, 48)]:
-        asm.add(make_brace().moved(
-                    Location((TURRET_X, ys*inch(20), 1183), (rot, 0, 0))),
-                "brace", side)
+        add("base_link",
+            make_brace().moved(
+                Location((TURRET_X, ys*inch(20), 1183), (rot, 0, 0))),
+            "brace", side)
 
-    # Knuckle-boom lift: turret pivot -> saddle under tube 1
-    saddle_x = -2012
-    saddle_top = CHUTE_CL_Z - TUBE_ODS[0]/2
-    asm.add(make_boom().moved(
-                Location((-2835, 0, 2362), (0, -38.8, 0))),
-            "lift_boom")
-    asm.add(make_cylinder_barrel().moved(
-                Location((-3884, 0, 1256), (0, 43.3, 0))),
-            "lift_cylinder_barrel")
-    asm.add(make_cylinder_rod().moved(
-                Location((-3242, 0, 1938), (0, 43.3, 0))),
-            "lift_cylinder_rod")
-    asm.add(make_saddle().moved(
-                Location((saddle_x, 0, saddle_top - inch(3)))),
-            "chute_saddle")
+    add("base_link",
+        make_cylinder_barrel().moved(Location((-3884, 0, 1256), (0, 43.3, 0))),
+        "lift_cylinder_barrel")
+    add("base_link",
+        make_cylinder_rod().moved(Location((-3242, 0, 1938), (0, 43.3, 0))),
+        "lift_cylinder_rod")
+    add("base_link",
+        make_chute_rest().moved(Location((-ft(18), 0, DECK_TOP_Z))),
+        "chute_rest")
+    add("base_link",
+        make_hopper_rest().moved(
+            Location((STA_FRAME_REAR + inch(12), 0, DECK_TOP_Z))),
+        "hopper_rest")
 
-    # Four telescoping chute sections, common centreline, staggered rears
+    # --- turret: rotating slew ring on top of the column ---
+    add("turret",
+        make_slew_ring().moved(Location((TURRET_X, 0, COLUMN_TOP_Z))),
+        "slew_ring")
+
+    # --- boom: lift arm from turret pivot toward the saddle ---
+    add("boom",
+        make_boom().moved(Location((-2835, 0, 2362), (0, -BOOM_ANGLE_DEG, 0))),
+        "lift_boom")
+
+    # --- chute_1: outer tube + saddle + discharge deflector ---
+    add("chute_1",
+        make_saddle().moved(Location((SADDLE_X, 0, SADDLE_TOP_Z - inch(3)))),
+        "chute_saddle")
+    add("chute_1",
+        make_deflector().moved(Location((-506, 0, 2685), (0, 50, 0))),
+        "discharge_deflector")
+
+    # --- chute_1..chute_4: telescoping sections; hopper rides chute_4 ---
     for i, (od, fx) in enumerate(zip(TUBE_ODS, TUBE_FRONT_X)):
         cx = fx - TUBE_LEN/2
-        asm.add(make_tube(od, TUBE_LEN).moved(
-                    Location((cx, 0, CHUTE_CL_Z))),
-                "chute_section", str(i+1))
+        add(f"chute_{i+1}",
+            make_tube(od, TUBE_LEN).moved(Location((cx, 0, CHUTE_CL_Z))),
+            "chute_section", str(i+1))
+    add("chute_4", make_hopper(), "hopper")
 
-    # Transport rest under tube 1, near its rear end
-    asm.add(make_chute_rest().moved(
-                Location((-ft(18), 0, DECK_TOP_Z))),
-            "chute_rest")
+    return groups
 
-    # Intake hopper + rear rest
-    asm.add(make_hopper(), "hopper")
-    asm.add(make_hopper_rest().moved(
-                Location((STA_FRAME_REAR + inch(12), 0, DECK_TOP_Z))),
-            "hopper_rest")
 
-    # Discharge deflector hanging from the front of tube 1
-    asm.add(make_deflector().moved(
-                Location((-506, 0, 2685), (0, 50, 0))),
-            "discharge_deflector")
-
+def gen_step():
+    asm = AssemblyHelper("tr5000_trash_rocket")
+    for link, parts in build_groups().items():
+        for shape, label in parts:
+            asm.add(shape, *label)
     return asm.build()
 
 
