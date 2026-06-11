@@ -49,6 +49,43 @@ MESH_DIR = "tr5000_1_meshes"
 
 DEG = math.pi / 180.0
 
+# ---------------------------------------------------------------------------
+# Spec-sheet physical properties (Rocket Equipment TR-5000 Trash Rocket)
+# DWG 75024  |  mfr: Rocket Equipment Inc.
+# ---------------------------------------------------------------------------
+# Trailer weight (GVW):      8,740 lbs  (3,964 kg)
+# Tongue weight:               950 lbs  (431 kg)
+# Axles:         6,000 lb tandem axles (2 × 2,722 kg rated)
+# Power:         Dual 195 Ah marine deep-cycle batteries (12 V)
+# Chute material:  1/8" (3.175 mm) 6061-T6 aluminium sidewalls,
+#                  1/16" (1.587 mm) aluminium cover sheet
+# Chute liner:     1/4" (6.35 mm) UHMW polyethylene (natural)
+# Hopper opening:  54" (1,371.6 mm) wide
+# Max hopper lip:  50'-5" (15.367 m) at 59° elevation (4-story setup)
+# Frame / column:  Carbon steel, primer + safety orange paint
+# Slew ring:       Carbon steel, worm-gear drive, hydraulic motor
+# ---------------------------------------------------------------------------
+
+# --- material RGBA colours (r g b a) ----------------------------------------
+MATERIALS = {
+    # name:               (R,    G,    B,    A)
+    "steel_orange":       (0.96, 0.45, 0.05, 1.0),   # safety orange frame
+    "steel_dark":         (0.18, 0.18, 0.18, 1.0),   # dark steel (axles, slew)
+    "aluminum_raw":       (0.75, 0.75, 0.78, 1.0),   # bare 6061-T6 aluminium
+    "uhmw_natural":       (0.95, 0.95, 0.90, 1.0),   # natural UHMW poly liner
+}
+
+# per-link material assignment
+LINK_MATERIAL = {
+    "base_link": "steel_orange",
+    "turret":    "steel_dark",
+    "boom":      "steel_orange",
+    "chute_1":   "aluminum_raw",
+    "chute_2":   "aluminum_raw",
+    "chute_3":   "aluminum_raw",
+    "chute_4":   "aluminum_raw",
+}
+
 # --- joint frames, derived from the CAD link frames (metres) ---------------
 TURRET_XYZ = tuple(v * MM for v in LINK_FRAMES["turret"])
 BOOM_IN_TURRET = tuple(
@@ -123,6 +160,7 @@ def _add_link(robot, name):
         "ixx": f"{ixx:.6g}", "iyy": f"{iyy:.6g}", "izz": f"{izz:.6g}",
         "ixy": "0", "ixz": "0", "iyz": "0",
     })
+    mat_name = LINK_MATERIAL[name]
     for tag in ("visual", "collision"):
         elem = ET.SubElement(link, tag)
         ET.SubElement(elem, "origin", {"xyz": "0 0 0", "rpy": "0 0 0"})
@@ -131,6 +169,8 @@ def _add_link(robot, name):
             "filename": f"{MESH_DIR}/{name}.stl",
             "scale": MESH_SCALE,
         })
+        if tag == "visual":
+            ET.SubElement(elem, "material", {"name": mat_name})
     return link
 
 
@@ -152,6 +192,11 @@ def _add_joint(robot, name, jtype, parent, child, xyz, axis=None,
 
 def gen_urdf():
     robot = ET.Element("robot", {"name": "tr5000_trash_rocket"})
+
+    # global material definitions (referenced by visual blocks on each link)
+    for mat_name, (r, g, b, a) in MATERIALS.items():
+        mat = ET.SubElement(robot, "material", {"name": mat_name})
+        ET.SubElement(mat, "color", {"rgba": f"{r} {g} {b} {a}"})
 
     for name in INERTIALS:
         _add_link(robot, name)
